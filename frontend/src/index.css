@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --theme-primary: #3b82f6; /* Default blue */
+}
+
+/* Theme color variants */
+[data-theme-color="blue"] {
+  --theme-primary: #3b82f6;
+}
+
+[data-theme-color="purple"] {
+  --theme-primary: #a855f7;
+}
+
+[data-theme-color="green"] {
+  --theme-primary: #22c55e;
+}
+
+[data-theme-color="orange"] {
+  --theme-primary: #f97316;
+}
+
+[data-theme-color="red"] {
+  --theme-primary: #ef4444;
+}
+
+[data-theme-color="pink"] {
+  --theme-primary: #ec4899;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: #f3f4f6;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background-color: #1f2937;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #d1d5db;
+  border-radius: 9999px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background-color: #4b5563;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: #9ca3af;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: #6b7280;
+}
