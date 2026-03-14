@@ -1,0 +1,9 @@
+Field,Type,Required,Constraints / Notes
+_id,ObjectId,yes,Auto-generated
+name,String,yes,
+email,String,yes,unique
+password,String,yes,hashed with bcrypt
+role,String,no,"enum: admin, teacher, student (default student)"
+avatar,String,no,URL or base-64
+phone,String,no,
+createdAt,Date,no,default Date.now

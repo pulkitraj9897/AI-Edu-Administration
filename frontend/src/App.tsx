@@ -6,12 +6,14 @@ import MainLayout from './components/Layout/MainLayout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Students from './pages/Students';
+import Teachers from './pages/Teachers';
 import Attendance from './pages/Attendance';
 import Timetable from './pages/Timetable';
 import Chatbot from './pages/Chatbot';
 import Analytics from './pages/Analytics';
 import Reports from './pages/Reports';
 import Notifications from './pages/Notifications';
+import Marks from './pages/Marks';
 import Settings from './pages/Settings';
 
 // Protected Route Component
@@ -41,11 +43,13 @@ function App() {
               <Route index element={<Navigate to="/dashboard" />} />
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="students" element={<Students />} />
+              <Route path="teachers" element={<Teachers />} />
               <Route path="attendance" element={<Attendance />} />
               <Route path="timetable" element={<Timetable />} />
               <Route path="chatbot" element={<Chatbot />} />
               <Route path="analytics" element={<Analytics />} />
               <Route path="reports" element={<Reports />} />
+              <Route path="marks" element={<Marks />} />
               <Route path="notifications" element={<Notifications />} />
               <Route path="settings" element={<Settings />} />
             </Route>

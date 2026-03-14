@@ -48,4 +48,18 @@ router.post('/', (req, res) => {
   res.status(201).json(newEntry);
 });
 
+// Update timetable entry
+router.put('/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  const index = timetable.findIndex(t => t.id === id);
+  
+  if (index !== -1) {
+    // Preserve id but update other fields
+    timetable[index] = { ...timetable[index], ...req.body, id };
+    res.json(timetable[index]);
+  } else {
+    res.status(404).json({ message: 'Timetable entry not found' });
+  }
+});
+
 export default router;

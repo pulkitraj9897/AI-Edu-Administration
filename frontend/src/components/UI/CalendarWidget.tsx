@@ -1,0 +1,199 @@
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import { Calendar as CalendarIcon, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Card } from './Card';
+
+interface EventData {
+  _id: string;
+  title: string;
+  description?: string;
+  date: string;
+  type: string;
+}
+
+const CalendarWidget: React.FC = () => {
+  const [events, setEvents] = useState<EventData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get('http://localhost:5000/api/events');
+        setEvents(response.data);
+      } catch (error) {
+        console.error('Failed to fetch events', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEvents();
+  }, []);
+
+  const getDaysInMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+  };
+
+  const getFirstDayOfMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  };
+
+  const prevMonth = () => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+  };
+
+  const nextMonth = () => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+  };
+
+  const hasEventOnDate = (dateInfo: number, month: number, year: number) => {
+    return events.some(e => {
+        const d = new Date(e.date);
+        return d.getDate() === dateInfo && d.getMonth() === month && d.getFullYear() === year;
+    });
+  };
+
+  const getEventsForDate = (date: Date) => {
+      return events.filter(e => {
+          const d = new Date(e.date);
+          return d.getDate() === date.getDate() && 
+                 d.getMonth() === date.getMonth() && 
+                 d.getFullYear() === date.getFullYear();
+      });
+  };
+
+  const getEventColor = (type: string) => {
+    switch (type) {
+      case 'holiday': return 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-800';
+      case 'exam': return 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800';
+      case 'event': return 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800';
+      default: return 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700';
+    }
+  };
+
+  // Generate calendar grid
+  const daysInMonth = getDaysInMonth(currentDate);
+  const firstDay = getFirstDayOfMonth(currentDate);
+  const days = [];
+  
+  // Empty slots for days before the 1st
+  for (let i = 0; i < firstDay; i++) {
+      days.push(<div key={`empty-${i}`} className="h-10"></div>);
+  }
+  
+  // Actual days
+  for (let i = 1; i <= daysInMonth; i++) {
+      const isToday = new Date().getDate() === i && 
+                      new Date().getMonth() === currentDate.getMonth() && 
+                      new Date().getFullYear() === currentDate.getFullYear();
+      
+      const isSelected = selectedDate.getDate() === i && 
+                         selectedDate.getMonth() === currentDate.getMonth() && 
+                         selectedDate.getFullYear() === currentDate.getFullYear();
+                         
+      const hasEvents = hasEventOnDate(i, currentDate.getMonth(), currentDate.getFullYear());
+
+      days.push(
+          <button 
+              key={`day-${i}`}
+              onClick={() => setSelectedDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), i))}
+              className={`h-10 w-full rounded-lg flex items-center justify-center relative font-medium transition-all
+                  ${isSelected ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/40'}
+                  ${isToday && !isSelected ? 'text-indigo-600 dark:text-indigo-400 font-bold' : ''}
+              `}
+          >
+              {i}
+              {hasEvents && (
+                  <span className={`absolute bottom-1 w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white' : 'bg-rose-500'}`}></span>
+              )}
+          </button>
+      );
+  }
+
+  const selectedEvents = getEventsForDate(selectedDate);
+  const weekDays = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+
+  if (loading) {
+    return (
+      <Card title="Interactive Calendar" className="h-full border-t-4 border-t-indigo-500">
+        <div className="flex justify-center items-center h-48 text-indigo-500">
+           <Loader2 className="w-8 h-8 animate-spin" />
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <Card title="Interactive Calendar" className="h-full border-t-4 border-t-indigo-500 flex flex-col transition-shadow hover:shadow-md">
+      
+      {/* Calendar Header */}
+      <div className="flex items-center justify-between mb-4 px-2">
+          <h2 className="text-lg font-bold text-gray-800 dark:text-white">
+              {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+          </h2>
+          <div className="flex items-center gap-1">
+              <button 
+                  onClick={prevMonth}
+                  className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 transition-colors"
+              >
+                  <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button 
+                  onClick={nextMonth}
+                  className="p-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 transition-colors"
+              >
+                  <ChevronRight className="w-5 h-5" />
+              </button>
+          </div>
+      </div>
+
+      {/* Calendar Grid */}
+      <div className="mb-6">
+          <div className="grid grid-cols-7 gap-1 mb-2">
+              {weekDays.map(day => (
+                  <div key={day} className="text-center text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                      {day}
+                  </div>
+              ))}
+          </div>
+          <div className="grid grid-cols-7 gap-1">
+              {days}
+          </div>
+      </div>
+
+      <hr className="border-gray-100 dark:border-gray-800 mb-4" />
+
+      {/* Selected Date Events */}
+      <div className="flex-1 overflow-y-auto pr-1 space-y-3">
+          <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+              <span>Events on {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+              <span className="text-xs bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">{selectedEvents.length}</span>
+          </h3>
+
+          {selectedEvents.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-6 text-gray-400 dark:text-gray-500">
+                  <CalendarIcon className="w-8 h-8 mb-2 opacity-20" />
+                  <p className="text-xs">No events scheduled.</p>
+              </div>
+          ) : (
+              selectedEvents.map(event => (
+                  <div key={event._id} className={`p-3 rounded-lg border ${getEventColor(event.type)} transition-transform hover:-translate-y-0.5`}>
+                      <div className="flex justify-between items-start mb-1">
+                          <h4 className="font-semibold text-sm leading-tight">{event.title}</h4>
+                          <span className="text-[9px] font-bold uppercase tracking-wider opacity-70 border border-current rounded-full px-2 py-0.5">
+                              {event.type}
+                          </span>
+                      </div>
+                      {event.description && <p className="text-xs opacity-80 mt-1">{event.description}</p>}
+                  </div>
+              ))
+          )}
+      </div>
+
+    </Card>
+  );
+};
+
+export default CalendarWidget;

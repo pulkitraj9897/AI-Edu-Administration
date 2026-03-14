@@ -12,6 +12,7 @@ const studentSchema = new mongoose.Schema({
   address: { type: String },
   parentName: { type: String },
   parentPhone: { type: String },
+  photograph: { type: String, default: null },
   admissionDate: { type: Date, default: Date.now },
   status: { type: String, enum: ['active', 'inactive'], default: 'active' },
   performance: {

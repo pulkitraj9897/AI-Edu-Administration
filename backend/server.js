@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import authRoutes from './routes/auth.js';
+import teacherRoutes from './routes/teachers.js';
 import studentRoutes from './routes/students.js';
 import attendanceRoutes from './routes/attendance.js';
 import timetableRoutes from './routes/timetable.js';
@@ -10,6 +11,8 @@ import analyticsRoutes from './routes/analytics.js';
 import reportsRoutes from './routes/reports.js';
 import chatbotRoutes from './routes/chatbot.js';
 import notificationRoutes from './routes/notifications.js';
+import marksRoutes from './routes/marks.js';
+import eventsRoutes from './routes/events.js';
 
 dotenv.config();
 
@@ -38,6 +41,7 @@ connectDB();
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/teachers', teacherRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/timetable', timetableRoutes);
@@ -45,6 +49,8 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/reports', reportsRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/marks', marksRoutes);
+app.use('/api/events', eventsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

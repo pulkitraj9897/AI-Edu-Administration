@@ -3,7 +3,7 @@ import axios from 'axios';
 import { TrendingUp, AlertTriangle, Award, Target } from 'lucide-react';
 import { Card, StatCard } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 
 const Analytics: React.FC = () => {
   const [predictions, setPredictions] = useState<any>(null);

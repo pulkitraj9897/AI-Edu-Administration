@@ -10,25 +10,36 @@ import {
   FileText,
   Bell,
   Settings,
-  GraduationCap
+  GraduationCap,
+  Award,
+  BookOpen
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 interface SidebarProps {
   isOpen: boolean;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
+  const { user } = useAuth();
+
   const menuItems = [
     { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/students', icon: Users, label: 'Students' },
+    { path: '/teachers', icon: BookOpen, label: 'Teachers', roles: ['admin'] },
+    { path: '/marks', icon: Award, label: 'Marks' },
     { path: '/attendance', icon: ClipboardList, label: 'Attendance' },
     { path: '/timetable', icon: Calendar, label: 'Timetable' },
     { path: '/chatbot', icon: Bot, label: 'AI Chatbot' },
-    { path: '/analytics', icon: BarChart3, label: 'Analytics' },
-    { path: '/reports', icon: FileText, label: 'Reports' },
-    { path: '/notifications', icon: Bell, label: 'Notifications' },
-    { path: '/settings', icon: Settings, label: 'Settings' },
+    { path: '/analytics', icon: BarChart3, label: 'Analytics', roles: ['admin'] },
+    { path: '/reports', icon: FileText, label: 'Reports', roles: ['admin', 'teacher'] },
+    { path: '/notifications', icon: Bell, label: 'Notifications', roles: ['admin', 'teacher', 'student'] },
+    { path: '/settings', icon: Settings, label: 'Settings', roles: ['admin'] },
   ];
+
+  const filteredItems = menuItems.filter(item => 
+    !item.roles || (user && item.roles.includes(user.role))
+  );
 
   return (
     <aside
@@ -55,7 +66,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
 
       {/* Navigation */}
       <nav className="p-4 space-y-2">
-        {menuItems.map((item) => (
+        {filteredItems.map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
