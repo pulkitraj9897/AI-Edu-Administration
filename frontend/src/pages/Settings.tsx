@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
 import { User, Bell, Lock, Palette, Globe, Shield } from 'lucide-react';
 import { Card } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
@@ -12,6 +13,14 @@ const Settings: React.FC = () => {
   const [themeColor, setThemeColor] = useState(() => {
     return localStorage.getItem('themeColor') || 'blue';
   });
+
+  // Password Update State
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Apply saved theme color on mount
   useEffect(() => {
@@ -49,6 +58,72 @@ const Settings: React.FC = () => {
     
     // Show success message
     alert(`Theme color changed to ${color}!`);
+  };
+
+  const handleUpdatePassword = async () => {
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      alert("Please fill in all password fields.");
+      return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+      alert("New password and confirm password do not match.");
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      alert("New password must be at least 6 characters long.");
+      return;
+    }
+
+    setIsUpdatingPassword(true);
+    try {
+      await axios.put('http://localhost:5000/api/auth/update-password', {
+        currentPassword,
+        newPassword
+      });
+      alert('Password updated successfully!');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.message || 'Failed to update password. Please try again.';
+      alert(`Error: ${errorMsg}`);
+      console.error('Password update error:', error);
+    } finally {
+      setIsUpdatingPassword(false);
+    }
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingPhoto(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      // 1. Upload to server
+      const uploadRes = await axios.post('http://localhost:5000/api/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      const avatarUrl = uploadRes.data.url;
+
+      // 2. Update user profile
+      await axios.put('http://localhost:5000/api/auth/update-profile', {
+        avatar: avatarUrl
+      });
+      
+      alert('Profile photo updated! Please refresh the page to see changes globally.');
+      // Optionally we could update the AuthContext here if it supported it
+    } catch (error: any) {
+      alert(error.response?.data?.message || 'Failed to upload photo');
+    } finally {
+      setIsUploadingPhoto(false);
+    }
   };
 
   const tabs = [
@@ -99,12 +174,23 @@ const Settings: React.FC = () => {
               <Card title="Profile Information">
                 <div className="space-y-4">
                   <div className="flex items-center gap-4 mb-6">
-                    <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center">
-                      <User className="w-10 h-10 text-white" />
+                    <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center overflow-hidden">
+                      {user?.avatar ? (
+                        <img src={user.avatar} alt="Profile" className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="w-10 h-10 text-white" />
+                      )}
                     </div>
                     <div>
-                      <Button variant="outline" size="sm">
-                        Change Photo
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        ref={fileInputRef}
+                        onChange={handlePhotoUpload} 
+                      />
+                      <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={isUploadingPhoto}>
+                        {isUploadingPhoto ? 'Uploading...' : 'Change Photo'}
                       </Button>
                     </div>
                   </div>
@@ -223,6 +309,8 @@ const Settings: React.FC = () => {
                     </label>
                     <input
                       type="password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
                       className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
                     />
                   </div>
@@ -233,6 +321,8 @@ const Settings: React.FC = () => {
                     </label>
                     <input
                       type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
                       className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
                     />
                   </div>
@@ -243,11 +333,15 @@ const Settings: React.FC = () => {
                     </label>
                     <input
                       type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
                       className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
                     />
                   </div>
 
-                  <Button>Update Password</Button>
+                  <Button onClick={handleUpdatePassword} disabled={isUpdatingPassword}>
+                    {isUpdatingPassword ? 'Updating...' : 'Update Password'}
+                  </Button>
                 </div>
               </Card>
 

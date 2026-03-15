@@ -15,6 +15,7 @@ import Reports from './pages/Reports';
 import Notifications from './pages/Notifications';
 import Marks from './pages/Marks';
 import Settings from './pages/Settings';
+import Documents from './pages/Documents';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -50,6 +51,7 @@ function App() {
               <Route path="analytics" element={<Analytics />} />
               <Route path="reports" element={<Reports />} />
               <Route path="marks" element={<Marks />} />
+              <Route path="documents" element={<Documents />} />
               <Route path="notifications" element={<Notifications />} />
               <Route path="settings" element={<Settings />} />
             </Route>

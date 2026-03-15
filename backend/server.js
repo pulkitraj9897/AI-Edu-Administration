@@ -22,6 +22,7 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static('uploads'));
 
 // MongoDB Connection (Optional - can be commented out if not using MongoDB yet)
 const connectDB = async () => {

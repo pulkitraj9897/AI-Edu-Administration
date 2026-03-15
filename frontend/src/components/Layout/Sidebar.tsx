@@ -12,7 +12,8 @@ import {
   Settings,
   GraduationCap,
   Award,
-  BookOpen
+  BookOpen,
+  Library
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -31,6 +32,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
     { path: '/attendance', icon: ClipboardList, label: 'Attendance' },
     { path: '/timetable', icon: Calendar, label: 'Timetable' },
     { path: '/chatbot', icon: Bot, label: 'AI Chatbot' },
+    { path: '/documents', icon: Library, label: 'Documents' },
     { path: '/analytics', icon: BarChart3, label: 'Analytics', roles: ['admin'] },
     { path: '/reports', icon: FileText, label: 'Reports', roles: ['admin', 'teacher'] },
     { path: '/notifications', icon: Bell, label: 'Notifications', roles: ['admin', 'teacher', 'student'] },
@@ -43,7 +45,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
 
   return (
     <aside
-      className={`fixed left-0 top-0 h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-all duration-300 z-40 ${
+      className={`fixed left-0 top-0 h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-all duration-300 z-40 flex flex-col ${
         isOpen ? 'w-64' : 'w-20'
       }`}
     >
@@ -65,7 +67,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
       </div>
 
       {/* Navigation */}
-      <nav className="p-4 space-y-2">
+      <nav className="p-4 space-y-2 flex-1 overflow-y-auto custom-scrollbar">
         {filteredItems.map((item) => (
           <NavLink
             key={item.path}
