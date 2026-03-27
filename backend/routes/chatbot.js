@@ -10,7 +10,7 @@ const router = express.Router();
 // Chat history storage per user (in memory for now)
 const chatHistories = {};
 
-const GEMINI_API_KEY = "AIzaSyA6iKW3aplolC0YrEXxYAKUgpH5kNy_EHo";
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 router.post('/message', async (req, res) => {
   try {
