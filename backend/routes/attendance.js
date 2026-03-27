@@ -87,6 +87,16 @@ router.post('/', protect, authorize('admin', 'teacher'), async (req, res) => {
       setDefaultsOnInsert: true
     });
 
+    // Update student's overall attendance percentage
+    const allRecords = await Attendance.find({ studentId });
+    const presentCount = allRecords.filter(a => a.status === 'present' || a.status === 'late').length;
+    const attendancePercentage = allRecords.length > 0 ? ((presentCount / allRecords.length) * 100).toFixed(2) : 0;
+    
+    await Student.findOneAndUpdate(
+      { studentId },
+      { $set: { 'performance.attendance': parseFloat(attendancePercentage) } }
+    );
+
     res.status(200).json(record);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -107,6 +117,18 @@ router.put('/:id', protect, authorize('admin', 'teacher'), async (req, res) => {
     record.timestamp = new Date();
 
     const updatedRecord = await record.save();
+
+    // Update student's overall attendance percentage
+    const studentId = record.studentId;
+    const allRecords = await Attendance.find({ studentId });
+    const presentCount = allRecords.filter(a => a.status === 'present' || a.status === 'late').length;
+    const attendancePercentage = allRecords.length > 0 ? ((presentCount / allRecords.length) * 100).toFixed(2) : 0;
+    
+    await Student.findOneAndUpdate(
+      { studentId },
+      { $set: { 'performance.attendance': parseFloat(attendancePercentage) } }
+    );
+
     res.json(updatedRecord);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -120,7 +142,19 @@ router.delete('/:id', protect, authorize('admin', 'teacher'), async (req, res) =
     if (!record) {
       return res.status(404).json({ message: 'Attendance record not found' });
     }
+    const studentId = record.studentId;
     await record.deleteOne();
+
+    // Update student's overall attendance percentage
+    const allRecords = await Attendance.find({ studentId });
+    const presentCount = allRecords.filter(a => a.status === 'present' || a.status === 'late').length;
+    const attendancePercentage = allRecords.length > 0 ? ((presentCount / allRecords.length) * 100).toFixed(2) : 0;
+    
+    await Student.findOneAndUpdate(
+      { studentId },
+      { $set: { 'performance.attendance': parseFloat(attendancePercentage) } }
+    );
+
     res.json({ message: 'Attendance record deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });

@@ -22,11 +22,14 @@ const Attendance: React.FC = () => {
   }, [selectedClass]);
 
   useEffect(() => {
-    if (students.length > 0) {
+    if (isAdminOrTeacher && students.length > 0) {
+      fetchAttendanceData();
+      fetchStats();
+    } else if (!isAdminOrTeacher) {
       fetchAttendanceData();
       fetchStats();
     }
-  }, [selectedDate, selectedClass, students]);
+  }, [selectedDate, selectedClass, students, isAdminOrTeacher]);
 
   const fetchStudents = async () => {
     try {
@@ -44,10 +47,15 @@ const Attendance: React.FC = () => {
 
   const fetchAttendanceData = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/attendance', {
-        params: { date: selectedDate, class: selectedClass }
-      });
-      setAttendanceData(response.data);
+      const params: any = {};
+      if (isAdminOrTeacher) {
+        params.date = selectedDate;
+        params.class = selectedClass;
+      }
+      const response = await axios.get('http://localhost:5000/api/attendance', { params });
+      // Sort to show most recent first for students
+      const sortedData = response.data.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      setAttendanceData(sortedData);
     } catch (error) {
       console.error('Error fetching attendance:', error);
     }
@@ -55,14 +63,17 @@ const Attendance: React.FC = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/attendance/stats', {
-        params: { date: selectedDate, class: selectedClass }
-      });
+      const params: any = {};
+      if (isAdminOrTeacher) {
+        params.date = selectedDate;
+        params.class = selectedClass;
+      }
+      const response = await axios.get('http://localhost:5000/api/attendance/stats', { params });
       setStats(response.data);
     } catch (error) {
       console.error('Error fetching stats:', error);
     } finally {
-      setLoading(false); // Stop loading after the final data dependency is resolved
+      setLoading(false);
     }
   };
 
@@ -76,6 +87,7 @@ const Attendance: React.FC = () => {
       });
       fetchAttendanceData();
       fetchStats();
+      window.alert('Attendance is saved');
     } catch (error) {
       console.error('Error marking attendance:', error);
     }
@@ -87,7 +99,32 @@ const Attendance: React.FC = () => {
     return record ? record.status : null;
   };
 
-  const columns = [
+  const getStudentColumns = () => [
+    { 
+      key: 'date', 
+      label: 'Date',
+      render: (_: any, record: any) => new Date(record.date).toLocaleDateString()
+    },
+    { 
+      key: 'status', 
+      label: 'Status',
+      render: (_: any, record: any) => {
+        const { status } = record;
+        return (
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+            status === 'present' ? 'bg-green-100 text-green-700' : 
+            status === 'absent' ? 'bg-red-100 text-red-700' : 
+            'bg-yellow-100 text-yellow-700'
+          }`}>
+            {status.charAt(0).toUpperCase() + status.slice(1)}
+          </span>
+        );
+      }
+    },
+    { key: 'markedBy', label: 'Marked By', render: (_: any, record: any) => record.markedBy || 'Teacher' }
+  ];
+
+  const adminTeacherColumns = [
     { 
       key: 'photograph', 
       label: 'Photo', 
@@ -122,6 +159,8 @@ const Attendance: React.FC = () => {
       }
     }
   ];
+
+  const columns = isAdminOrTeacher ? adminTeacherColumns : getStudentColumns();
 
   if (isAdminOrTeacher) {
     columns.push({
@@ -263,9 +302,12 @@ const Attendance: React.FC = () => {
 
       {/* Attendance Table */}
       <Card title={isAdminOrTeacher ? `Attendance for ${selectedClass} - ${new Date(selectedDate).toLocaleDateString()}` : "Your Recent Attendance"}>
-        <Table columns={columns} data={students} />
-        {students.length === 0 && (
+        <Table columns={columns} data={isAdminOrTeacher ? students : attendanceData} />
+        {isAdminOrTeacher && students.length === 0 && (
           <p className="text-center text-gray-500 py-4">No students found for this class.</p>
+        )}
+        {!isAdminOrTeacher && attendanceData.length === 0 && (
+          <p className="text-center text-gray-500 py-4">No attendance records found.</p>
         )}
       </Card>
 

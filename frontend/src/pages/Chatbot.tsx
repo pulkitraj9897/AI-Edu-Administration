@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Send, Bot, User, Trash2, Sparkles } from 'lucide-react';
 import { Card } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
+import { useAuth } from '../context/AuthContext';
 
 interface Message {
   id: number;
@@ -12,6 +13,7 @@ interface Message {
 }
 
 const Chatbot: React.FC = () => {
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,8 +32,9 @@ const Chatbot: React.FC = () => {
   };
 
   const fetchChatHistory = async () => {
+    if (!user?.id) return;
     try {
-      const response = await axios.get('http://localhost:5000/api/chatbot/history');
+      const response = await axios.get(`http://localhost:5000/api/chatbot/history?userId=${user.id}`);
       setMessages(response.data);
     } catch (error) {
       console.error('Error fetching chat history:', error);
@@ -55,8 +58,9 @@ const Chatbot: React.FC = () => {
     try {
       const response = await axios.post('http://localhost:5000/api/chatbot/message', {
         message: inputMessage,
-        userId: 1,
-        userRole: 'student'
+        userId: user?.id,
+        userRole: user?.role,
+        email: user?.email
       });
 
       setMessages((prev) => [...prev, response.data]);
@@ -68,9 +72,10 @@ const Chatbot: React.FC = () => {
   };
 
   const clearHistory = async () => {
+    if (!user?.id) return;
     if (window.confirm('Are you sure you want to clear the chat history?')) {
       try {
-        await axios.delete('http://localhost:5000/api/chatbot/history');
+        await axios.delete(`http://localhost:5000/api/chatbot/history?userId=${user.id}`);
         setMessages([]);
       } catch (error) {
         console.error('Error clearing history:', error);
@@ -218,23 +223,7 @@ const Chatbot: React.FC = () => {
         </div>
       </Card>
 
-      {/* AI Info */}
-      <Card>
-        <div className="flex items-start gap-3">
-          <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-            <Bot className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-          </div>
-          <div className="flex-1">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">
-              AI Integration Ready
-            </h3>
-            <p className="text-xs text-gray-600 dark:text-gray-400">
-              This chatbot is ready to integrate with OpenAI API or any local LLM. Update the backend
-              with your API key to enable advanced AI responses.
-            </p>
-          </div>
-        </div>
-      </Card>
+
     </div>
   );
 };

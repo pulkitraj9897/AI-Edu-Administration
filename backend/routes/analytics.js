@@ -1,4 +1,8 @@
 import express from 'express';
+import User from '../models/User.js';
+import Student from '../models/Student.js';
+import Attendance from '../models/Attendance.js';
+import Mark from '../models/Mark.js';
 
 const router = express.Router();
 
@@ -57,29 +61,76 @@ router.get('/predictions', (req, res) => {
 });
 
 // Get Student Dashboard Data
-router.get('/student-dashboard/:studentId', (req, res) => {
-  const { studentId } = req.params;
-  const dashboardData = {
-    studentId,
-    gpa: 3.8,
-    attendance: 94.5,
-    rank: 12,
-    recentMarks: [
-      { subject: 'Mathematics', score: 92, grade: 'A' },
-      { subject: 'Science', score: 88, grade: 'B+' },
-      { subject: 'English', score: 95, grade: 'A+' }
-    ],
-    attendanceTrend: [
-      { month: 'Jan', rate: 95 },
-      { month: 'Feb', rate: 92 },
-      { month: 'Mar', rate: 96 }
-    ],
-    upcomingAssignments: [
-      { subject: 'Science', title: 'Lab Report', dueDate: new Date(Date.now() + 86400000 * 3) },
-      { subject: 'English', title: 'Essay Submission', dueDate: new Date(Date.now() + 86400000 * 5) }
-    ]
-  };
-  setTimeout(() => res.json(dashboardData), 500);
+router.get('/student-dashboard/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    
+    const student = await Student.findOne({ email: user.email });
+    if (!student) return res.status(404).json({ message: 'Student profile not found' });
+
+    // Calculate actual attendance
+    const attendanceRecords = await Attendance.find({ studentId: student.studentId });
+    const totalDays = attendanceRecords.length;
+    const presentDays = attendanceRecords.filter(r => r.status === 'present' || r.status === 'late').length;
+    const attendancePercentage = totalDays > 0 ? ((presentDays / totalDays) * 100).toFixed(2) : 0;
+
+    // Calculate attendance trend (by month)
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const attendanceTrendMap = {};
+    attendanceRecords.forEach(r => {
+       const d = new Date(r.date);
+       const month = months[d.getMonth()];
+       if (!attendanceTrendMap[month]) attendanceTrendMap[month] = { total: 0, present: 0 };
+       attendanceTrendMap[month].total++;
+       if (r.status === 'present' || r.status === 'late') attendanceTrendMap[month].present++;
+    });
+    const attendanceTrend = Object.keys(attendanceTrendMap).map(m => ({
+       month: m,
+       rate: parseFloat(((attendanceTrendMap[m].present / attendanceTrendMap[m].total) * 100).toFixed(2))
+    }));
+
+    // Retrieve real marks
+    const marksRecords = await Mark.find({ studentId: student.studentId }).sort({ date: -1 }).limit(5);
+    const recentMarks = marksRecords.map(m => ({
+       subject: m.subject || m.examName || 'Subject',
+       score: m.marksObtained,
+       grade: m.grade || (m.marksObtained > 90 ? 'A' : m.marksObtained > 80 ? 'B' : 'C')
+    }));
+
+    // GPA calculation mapping average to 4.0
+    let totalScore = 0;
+    marksRecords.forEach(m => totalScore += (m.marksObtained / (m.totalMarks || 100)) * 100);
+    const avgScore = marksRecords.length > 0 ? totalScore / marksRecords.length : 0;
+    const gpa = ((avgScore / 100) * 4.0).toFixed(2);
+
+    // Update the student model's performance
+    if (!student.performance) student.performance = { gpa: 0, attendance: 0 };
+    student.performance.attendance = parseFloat(attendancePercentage);
+    student.performance.gpa = parseFloat(gpa);
+    await student.save();
+
+    const dashboardData = {
+      studentId: student.studentId,
+      gpa: parseFloat(gpa),
+      attendance: parseFloat(attendancePercentage),
+      rank: student.performance.rank || '-',
+      recentMarks: recentMarks.length > 0 ? recentMarks : [
+        { subject: 'No exams yet', score: 0, grade: 'N/A' }
+      ],
+      attendanceTrend: attendanceTrend.length > 0 ? attendanceTrend : [
+        { month: 'Current', rate: parseFloat(attendancePercentage) }
+      ],
+      upcomingAssignments: [
+        { subject: 'General', title: 'Welcome to new term', dueDate: new Date(Date.now() + 86400000 * 5) }
+      ]
+    };
+    
+    res.json(dashboardData);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 });
 
 // Get Teacher Dashboard Data
