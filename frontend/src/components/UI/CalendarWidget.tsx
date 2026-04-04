@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../../utils/api';
 import { Calendar as CalendarIcon, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card } from './Card';
 
@@ -21,7 +21,7 @@ const CalendarWidget: React.FC = () => {
     const fetchEvents = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('http://localhost:5000/api/events');
+        const response = await api.get('/events');
         setEvents(response.data);
       } catch (error) {
         console.error('Failed to fetch events', error);

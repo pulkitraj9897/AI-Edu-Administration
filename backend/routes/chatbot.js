@@ -10,7 +10,6 @@ const router = express.Router();
 // Chat history storage per user (in memory for now)
 const chatHistories = {};
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 router.post('/message', async (req, res) => {
   try {
@@ -90,7 +89,8 @@ Answer the user's latest message based on this context. Do not invent marks or s
     geminiParts.push({ text: `User message: ${message}\n\nPlease respond based on the context above.` });
 
     try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+      const apiKey = (process.env.GEMINI_API_KEY || '').replace(/["']/g, '');
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
