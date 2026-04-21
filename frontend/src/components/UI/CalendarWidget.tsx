@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../utils/api';
-import { Calendar as CalendarIcon, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar as CalendarIcon, Loader2, ChevronLeft, ChevronRight, Plus, X } from 'lucide-react';
 import { Card } from './Card';
+import { useAuth } from '../../context/AuthContext';
 
 interface EventData {
   _id: string;
@@ -17,20 +18,45 @@ const CalendarWidget: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newEvent, setNewEvent] = useState({ title: '', date: '', type: 'event', description: '' });
+  const [addingEvent, setAddingEvent] = useState(false);
+
+  const fetchEvents = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get('/events');
+      setEvents(response.data);
+    } catch (error) {
+      console.error('Failed to fetch events', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        setLoading(true);
-        const response = await api.get('/events');
-        setEvents(response.data);
-      } catch (error) {
-        console.error('Failed to fetch events', error);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchEvents();
   }, []);
+
+  const handleAddEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newEvent.title || !newEvent.date) return;
+    
+    try {
+      setAddingEvent(true);
+      await api.post('/events', newEvent);
+      setShowAddModal(false);
+      setNewEvent({ title: '', date: '', type: 'event', description: '' });
+      await fetchEvents();
+    } catch (error) {
+      console.error('Error adding event:', error);
+      alert('Failed to add event.');
+    } finally {
+      setAddingEvent(false);
+    }
+  };
 
   const getDaysInMonth = (date: Date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -130,8 +156,13 @@ const CalendarWidget: React.FC = () => {
       
       {/* Calendar Header */}
       <div className="flex items-center justify-between mb-4 px-2">
-          <h2 className="text-lg font-bold text-gray-800 dark:text-white">
+          <h2 className="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
               {currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+              {isAdmin && (
+                 <button onClick={() => setShowAddModal(true)} className="p-1 bg-indigo-100 text-indigo-600 rounded hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-800/50 transition-colors" title="Add Event">
+                     <Plus className="w-4 h-4" />
+                 </button>
+              )}
           </h2>
           <div className="flex items-center gap-1">
               <button 
@@ -192,6 +223,52 @@ const CalendarWidget: React.FC = () => {
           )}
       </div>
 
+      {/* Add Event Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-gray-900 rounded-xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-gray-800/50">
+                    <h3 className="font-bold text-lg text-gray-900 dark:text-white flex items-center gap-2">
+                        <CalendarIcon className="w-5 h-5 text-indigo-500" />
+                        Add New Event
+                    </h3>
+                    <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+                <form onSubmit={handleAddEvent} className="p-5 space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Event Title</label>
+                        <input type="text" required value={newEvent.title} onChange={e => setNewEvent({...newEvent, title: e.target.value})} className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-white" placeholder="e.g., Science Fair" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
+                        <input type="date" required value={newEvent.date} onChange={e => setNewEvent({...newEvent, date: e.target.value})} className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-white" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Event Type</label>
+                        <select value={newEvent.type} onChange={e => setNewEvent({...newEvent, type: e.target.value})} className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-white">
+                            <option value="event">General Event</option>
+                            <option value="holiday">Holiday</option>
+                            <option value="exam">Examination</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description (Optional)</label>
+                        <textarea value={newEvent.description} onChange={e => setNewEvent({...newEvent, description: e.target.value})} className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-white resize-none h-20" placeholder="Details about the event..."></textarea>
+                    </div>
+                    <div className="pt-2 flex gap-3">
+                        <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-lg font-medium transition-colors">
+                            Cancel
+                        </button>
+                        <button type="submit" disabled={addingEvent} className="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors flex justify-center items-center">
+                            {addingEvent ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Save Event'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+      )}
     </Card>
   );
 };

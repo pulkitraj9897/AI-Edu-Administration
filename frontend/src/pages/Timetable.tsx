@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import api from '../utils/api';
 import { Calendar, Clock, User, MapPin, RefreshCw } from 'lucide-react';
 import { Card } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
@@ -85,6 +86,23 @@ const Timetable: React.FC = () => {
     }
   };
 
+  const handleGenerateTimetable = async () => {
+    if(!window.confirm(`Are you sure you want to completely overwrite the timetable for Class ${selectedClass}?`)) {
+       return;
+    }
+    try {
+        setSaving(true);
+        // Warning: This wipes data for the class.
+        await api.post('/timetable/generate', { class: selectedClass });
+        await fetchTimetable();
+    } catch (error) {
+        console.error('Error generating timetable', error);
+        alert('Failed to generate timetable. Ensure Teachers exist for this class in the database.');
+    } finally {
+        setSaving(false);
+    }
+  };
+
   const toggleEditMode = () => {
       if (isEditing) {
           // Cancel edit: revert to original
@@ -140,9 +158,9 @@ const Timetable: React.FC = () => {
                 </>
               ) : (
                 <>
-                  <Button variant="outline">
-                    <RefreshCw className="w-5 h-5" />
-                    Auto-Generate
+                  <Button variant="outline" onClick={handleGenerateTimetable} disabled={saving}>
+                    <RefreshCw className={`w-5 h-5 mr-2 ${saving ? 'animate-spin' : ''}`} />
+                    {saving ? 'Generating...' : 'Auto-Generate'}
                   </Button>
                   <Button onClick={toggleEditMode}>Edit Timetable</Button>
                 </>
@@ -300,9 +318,9 @@ const Timetable: React.FC = () => {
               Conflict detection and resolution
             </li>
           </ul>
-          <Button>
-            <RefreshCw className="w-5 h-5" />
-            Generate Optimized Timetable
+          <Button onClick={handleGenerateTimetable} disabled={saving}>
+             <RefreshCw className={`w-5 h-5 mr-2 ${saving ? 'animate-spin' : ''}`} />
+             {saving ? 'Generating Mathematical Grid...' : 'Generate Optimized Timetable'}
           </Button>
         </div>
       </Card>

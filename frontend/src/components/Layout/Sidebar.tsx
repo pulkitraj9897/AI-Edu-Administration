@@ -33,7 +33,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
     { path: '/timetable', icon: Calendar, label: 'Timetable' },
     { path: '/chatbot', icon: Bot, label: 'AI Chatbot' },
     { path: '/documents', icon: Library, label: 'Documents' },
-    { path: '/analytics', icon: BarChart3, label: 'Analytics', roles: ['admin'] },
+    { path: '/analytics', icon: BarChart3, label: 'Analytics' },
     { path: '/reports', icon: FileText, label: 'Reports', roles: ['admin', 'teacher'] },
     { path: '/notifications', icon: Bell, label: 'Notifications', roles: ['admin', 'teacher', 'student'] },
     { path: '/settings', icon: Settings, label: 'Settings', roles: ['admin'] },

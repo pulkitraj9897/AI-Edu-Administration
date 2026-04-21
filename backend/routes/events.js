@@ -4,10 +4,10 @@ import { protect, authorize } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Get upcoming events
+// Get all events
 router.get('/', protect, async (req, res) => {
   try {
-    const events = await Event.find({ date: { $gte: new Date() } }).sort({ date: 1 });
+    const events = await Event.find().sort({ date: 1 });
     res.json(events);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching events', error: error.message });

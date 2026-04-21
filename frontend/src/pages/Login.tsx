@@ -28,15 +28,16 @@ const Login: React.FC = () => {
   };
 
   const quickLogin = (role: string) => {
-    const credentials = {
+    const credentials: Record<string, {email: string, password: string}> = {
       admin: { email: 'admin@school.com', password: 'admin123' },
-      teacher: { email: 'teacher@school.com', password: 'teacher123' },
-      student: { email: 'student@school.com', password: 'student123' }
-    }[role];
+      teacher: { email: 'vihaan.bose74@school.com', password: 'password123' },
+      student: { email: 'rohan.verma68@student.com', password: 'password123' }
+    };
 
-    if (credentials) {
-      setEmail(credentials.email);
-      setPassword(credentials.password);
+    const selected = credentials[role];
+    if (selected) {
+      setEmail(selected.email);
+      setPassword(selected.password);
     }
   };
 
@@ -148,10 +149,6 @@ const Login: React.FC = () => {
           </div>
         </div>
 
-        {/* Footer */}
-        <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-6">
-          © 2024 EduAdmin AI. All rights reserved.
-        </p>
       </div>
     </div>
   );

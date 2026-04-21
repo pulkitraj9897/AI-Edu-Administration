@@ -19,6 +19,14 @@ const studentSchema = new mongoose.Schema({
     gpa: { type: Number, default: 0 },
     attendance: { type: Number, default: 0 },
     rank: { type: Number }
+  },
+  skillsProfile: {
+    hasTakenTest: { type: Boolean, default: false },
+    skillsData: [{
+      skill: String,
+      value: Number
+    }],
+    aiInsights: { type: String, default: null }
   }
 });
 

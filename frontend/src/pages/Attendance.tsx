@@ -5,15 +5,18 @@ import { Card, StatCard } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
 import { Table } from '../components/UI/Table';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const Attendance: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const isAdminOrTeacher = user?.role === 'admin' || user?.role === 'teacher';
 
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedClass, setSelectedClass] = useState('10A');
   const [students, setStudents] = useState<any[]>([]);
   const [attendanceData, setAttendanceData] = useState<any[]>([]);
+  const [pendingAttendance, setPendingAttendance] = useState<Record<string, string>>({});
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -22,6 +25,7 @@ const Attendance: React.FC = () => {
   }, [selectedClass]);
 
   useEffect(() => {
+    setPendingAttendance({});
     if (isAdminOrTeacher && students.length > 0) {
       fetchAttendanceData();
       fetchStats();
@@ -77,24 +81,63 @@ const Attendance: React.FC = () => {
     }
   };
 
-  const markAttendance = async (studentId: string, status: string) => {
+  const toggleAttendance = (studentId: string, status: string) => {
+    setPendingAttendance(prev => ({
+      ...prev,
+      [studentId]: status
+    }));
+  };
+
+  const saveAllAttendance = async () => {
+    const studentIds = Object.keys(pendingAttendance);
+    if (studentIds.length === 0) {
+      window.alert('No unsaved attendance changes.');
+      return;
+    }
+    
     try {
-      await axios.post('http://localhost:5000/api/attendance', {
-        studentId,
-        date: selectedDate,
-        status,
-        class: selectedClass
-      });
-      fetchAttendanceData();
-      fetchStats();
+      setLoading(true);
+      await Promise.all(studentIds.map(studentId => 
+        axios.post('http://localhost:5000/api/attendance', {
+          studentId,
+          date: selectedDate,
+          status: pendingAttendance[studentId],
+          class: selectedClass
+        })
+      ));
+      
+      setPendingAttendance({});
+      await fetchAttendanceData();
+      await fetchStats();
+      // fetchStats sets loading false in finally clause, but if we await here we can just alert
       window.alert('Attendance is saved');
     } catch (error) {
-      console.error('Error marking attendance:', error);
+      console.error('Error saving attendance:', error);
+      window.alert('Error saving attendance');
+      setLoading(false);
+    }
+  };
+
+  const handleGenerateReport = async () => {
+    try {
+      setLoading(true);
+      await axios.post('http://localhost:5000/api/reports/attendance', { 
+        startDate: selectedDate, 
+        endDate: selectedDate, 
+        class: selectedClass 
+      });
+      window.alert('Attendance report generated successfully! You can view it in the Reports section.');
+      navigate('/reports');
+    } catch (error) {
+      console.error('Error generating report:', error);
+      window.alert('Failed to generate report.');
+      setLoading(false);
     }
   };
 
   // Map to get the status of each student for the current date
   const getAttendanceStatus = (studentId: string) => {
+    if (pendingAttendance[studentId]) return pendingAttendance[studentId];
     const record = attendanceData.find(a => a.studentId === studentId);
     return record ? record.status : null;
   };
@@ -172,7 +215,7 @@ const Attendance: React.FC = () => {
         return (
           <div className="flex gap-2">
             <button
-              onClick={() => markAttendance(student.studentId, 'present')}
+              onClick={() => toggleAttendance(student.studentId, 'present')}
               className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
                 status === 'present' 
                   ? 'bg-green-600 text-white' 
@@ -182,7 +225,7 @@ const Attendance: React.FC = () => {
               Present
             </button>
             <button
-              onClick={() => markAttendance(student.studentId, 'absent')}
+              onClick={() => toggleAttendance(student.studentId, 'absent')}
               className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
                 status === 'absent' 
                   ? 'bg-red-600 text-white' 
@@ -192,7 +235,7 @@ const Attendance: React.FC = () => {
               Absent
             </button>
             <button
-              onClick={() => markAttendance(student.studentId, 'late')}
+              onClick={() => toggleAttendance(student.studentId, 'late')}
               className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
                 status === 'late' 
                   ? 'bg-yellow-600 text-white' 
@@ -293,8 +336,8 @@ const Attendance: React.FC = () => {
             </div>
 
             <div className="flex items-end gap-2">
-              <Button>Save All</Button>
-              <Button variant="outline">Generate Report</Button>
+              <Button onClick={saveAllAttendance}>Save All</Button>
+              <Button variant="outline" onClick={handleGenerateReport}>Generate Report</Button>
             </div>
           </div>
         </Card>
