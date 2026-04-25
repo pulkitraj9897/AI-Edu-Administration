@@ -20,7 +20,7 @@ const Timetable: React.FC = () => {
 
   const fetchTimetable = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/timetable', {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/timetable`, {
         params: { class: selectedClass }
       });
       setTimetable(response.data);
@@ -71,9 +71,9 @@ const Timetable: React.FC = () => {
             editFormData.map(async (dayData: any) => {
                 // If it has an ID, we update, else it's a new day entirely being drafted
                 if (dayData.id) {
-                    await axios.put(`http://localhost:5000/api/timetable/${dayData.id}`, dayData);
+                    await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/timetable/${dayData.id}`, dayData);
                 } else if (dayData.schedule.length > 0) {
-                    await axios.post(`http://localhost:5000/api/timetable`, dayData);
+                    await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/timetable`, dayData);
                 }
             })
         );

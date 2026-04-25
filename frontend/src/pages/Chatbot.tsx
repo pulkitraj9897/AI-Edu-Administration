@@ -34,7 +34,7 @@ const Chatbot: React.FC = () => {
   const fetchChatHistory = async () => {
     if (!user?.id) return;
     try {
-      const response = await axios.get(`http://localhost:5000/api/chatbot/history?userId=${user.id}`);
+      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/chatbot/history?userId=${user.id}`);
       setMessages(response.data);
     } catch (error) {
       console.error('Error fetching chat history:', error);
@@ -56,7 +56,7 @@ const Chatbot: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:5000/api/chatbot/message', {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/chatbot/message`, {
         message: inputMessage,
         userId: user?.id,
         userRole: user?.role,
@@ -75,7 +75,7 @@ const Chatbot: React.FC = () => {
     if (!user?.id) return;
     if (window.confirm('Are you sure you want to clear the chat history?')) {
       try {
-        await axios.delete(`http://localhost:5000/api/chatbot/history?userId=${user.id}`);
+        await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/chatbot/history?userId=${user.id}`);
         setMessages([]);
       } catch (error) {
         console.error('Error clearing history:', error);

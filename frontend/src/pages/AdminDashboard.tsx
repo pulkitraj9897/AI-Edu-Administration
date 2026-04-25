@@ -59,7 +59,7 @@ const AdminDashboard: React.FC = () => {
     const fetchAnalytics = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('http://localhost:5000/api/analytics/dashboard');
+        const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/analytics/dashboard`);
         setAnalytics(response.data);
       } catch (error) {
         console.error('Error fetching analytics:', error);

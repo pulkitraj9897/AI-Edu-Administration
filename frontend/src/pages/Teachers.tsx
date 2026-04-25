@@ -44,7 +44,7 @@ const Teachers: React.FC = () => {
   const fetchTeachers = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:5000/api/teachers');
+      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/teachers`);
       setTeachers(response.data);
     } catch (error) {
       console.error('Error fetching teachers:', error);
@@ -56,7 +56,7 @@ const Teachers: React.FC = () => {
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this teacher?')) {
       try {
-        await axios.delete(`http://localhost:5000/api/teachers/${id}`);
+        await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/teachers/${id}`);
         fetchTeachers();
       } catch (error) {
         console.error('Error deleting teacher:', error);
@@ -74,14 +74,14 @@ const Teachers: React.FC = () => {
       };
 
       if (editingTeacher) {
-        await axios.put(`http://localhost:5000/api/teachers/${editingTeacher._id}`, payload);
+        await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/teachers/${editingTeacher._id}`, payload);
       } else {
-        await axios.post('http://localhost:5000/api/teachers', payload);
+        await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/teachers`, payload);
         
         // After creating the teacher record, generate their login credentials if requested
         if (formData.createAccount && formData.password) {
           try {
-             await axios.post('http://localhost:5000/api/auth/register-account', {
+             await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/register-account`, {
                name: formData.name,
                email: formData.email,
                password: formData.password,

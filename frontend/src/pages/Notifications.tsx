@@ -24,7 +24,7 @@ const Notifications: React.FC = () => {
 
   const fetchNotifications = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/notifications', {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/notifications`, {
         params: { unreadOnly: filter === 'unread' }
       });
       setNotifications(response.data);
@@ -35,7 +35,7 @@ const Notifications: React.FC = () => {
 
   const markAsRead = async (id: number) => {
     try {
-      await axios.put(`http://localhost:5000/api/notifications/${id}/read`);
+      await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/notifications/${id}/read`);
       fetchNotifications();
     } catch (error) {
       console.error('Error marking notification as read:', error);
@@ -44,7 +44,7 @@ const Notifications: React.FC = () => {
 
   const markAllAsRead = async () => {
     try {
-      await axios.put('http://localhost:5000/api/notifications/read-all');
+      await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/notifications/read-all`);
       fetchNotifications();
     } catch (error) {
       console.error('Error marking all as read:', error);
@@ -53,7 +53,7 @@ const Notifications: React.FC = () => {
 
   const deleteNotification = async (id: number) => {
     try {
-      await axios.delete(`http://localhost:5000/api/notifications/${id}`);
+      await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/notifications/${id}`);
       fetchNotifications();
     } catch (error) {
       console.error('Error deleting notification:', error);

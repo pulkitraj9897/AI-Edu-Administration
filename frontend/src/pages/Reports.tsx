@@ -31,7 +31,7 @@ const Reports: React.FC = () => {
 
   const fetchReports = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/reports');
+      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/reports`);
       setReports(response.data);
     } catch (error) {
       console.error('Error fetching reports:', error);
@@ -42,11 +42,11 @@ const Reports: React.FC = () => {
     setGenerating(true);
     try {
       if (reportType === 'attendance') {
-        await axios.post('http://localhost:5000/api/reports/attendance', { startDate, endDate, class: className });
+        await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/reports/attendance`, { startDate, endDate, class: className });
       } else if (reportType === 'performance') {
-        await axios.post('http://localhost:5000/api/reports/performance', { studentId, semester });
+        await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/reports/performance`, { studentId, semester });
       } else {
-        await axios.post('http://localhost:5000/api/reports/ai-summary', { type: 'global' });
+        await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/reports/ai-summary`, { type: 'global' });
       }
       alert(`Report generated successfully!`);
       fetchReports();

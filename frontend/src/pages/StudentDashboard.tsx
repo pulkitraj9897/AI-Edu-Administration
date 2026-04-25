@@ -51,7 +51,7 @@ const StudentDashboard: React.FC = () => {
       try {
         setLoading(true);
         // Using user.id as the identifier for analytics
-        const response = await axios.get(`http://localhost:5000/api/analytics/student-dashboard/${user?.id}`);
+        const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/analytics/student-dashboard/${user?.id}`);
         setAnalytics(response.data);
       } catch (error) {
         console.error('Error fetching analytics:', error);

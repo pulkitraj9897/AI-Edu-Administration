@@ -45,7 +45,7 @@ const Marks: React.FC = () => {
 
   const fetchMarks = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/marks');
+      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/marks`);
       setMarks(response.data);
     } catch (error) {
       console.error('Error fetching marks:', error);
@@ -54,7 +54,7 @@ const Marks: React.FC = () => {
 
   const fetchStudents = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/students');
+      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/students`);
       setStudents(response.data);
     } catch (error) {
       console.error('Error fetching students:', error);
@@ -64,7 +64,7 @@ const Marks: React.FC = () => {
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this mark record?')) {
       try {
-        await axios.delete(`http://localhost:5000/api/marks/${id}`);
+        await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/marks/${id}`);
         alert('Mark record deleted successfully!');
         fetchMarks();
       } catch (error) {
@@ -78,10 +78,10 @@ const Marks: React.FC = () => {
     e.preventDefault();
     try {
       if (editingMark) {
-        await axios.put(`http://localhost:5000/api/marks/${editingMark._id}`, formData);
+        await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/marks/${editingMark._id}`, formData);
         alert('Mark record updated successfully!');
       } else {
-        await axios.post('http://localhost:5000/api/marks', formData);
+        await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/marks`, formData);
         alert('Mark record added successfully!');
       }
       setShowModal(false);

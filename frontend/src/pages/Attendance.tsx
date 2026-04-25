@@ -38,7 +38,7 @@ const Attendance: React.FC = () => {
   const fetchStudents = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:5000/api/students');
+      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/students`);
       // Filter students by selected class
       const filtered = response.data.filter((s: any) => s.class === selectedClass);
       setStudents(filtered);
@@ -56,7 +56,7 @@ const Attendance: React.FC = () => {
         params.date = selectedDate;
         params.class = selectedClass;
       }
-      const response = await axios.get('http://localhost:5000/api/attendance', { params });
+      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/attendance`, { params });
       // Sort to show most recent first for students
       const sortedData = response.data.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
       setAttendanceData(sortedData);
@@ -72,7 +72,7 @@ const Attendance: React.FC = () => {
         params.date = selectedDate;
         params.class = selectedClass;
       }
-      const response = await axios.get('http://localhost:5000/api/attendance/stats', { params });
+      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/attendance/stats`, { params });
       setStats(response.data);
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -98,7 +98,7 @@ const Attendance: React.FC = () => {
     try {
       setLoading(true);
       await Promise.all(studentIds.map(studentId => 
-        axios.post('http://localhost:5000/api/attendance', {
+        axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/attendance`, {
           studentId,
           date: selectedDate,
           status: pendingAttendance[studentId],
@@ -121,7 +121,7 @@ const Attendance: React.FC = () => {
   const handleGenerateReport = async () => {
     try {
       setLoading(true);
-      await axios.post('http://localhost:5000/api/reports/attendance', { 
+      await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/reports/attendance`, { 
         startDate: selectedDate, 
         endDate: selectedDate, 
         class: selectedClass 

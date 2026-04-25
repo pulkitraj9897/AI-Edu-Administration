@@ -78,7 +78,7 @@ const Settings: React.FC = () => {
 
     setIsUpdatingPassword(true);
     try {
-      await axios.put('http://localhost:5000/api/auth/update-password', {
+      await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/update-password`, {
         currentPassword,
         newPassword
       });
@@ -105,7 +105,7 @@ const Settings: React.FC = () => {
 
     try {
       // 1. Upload to server
-      const uploadRes = await axios.post('http://localhost:5000/api/upload', formData, {
+      const uploadRes = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/upload`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -113,7 +113,7 @@ const Settings: React.FC = () => {
       const avatarUrl = uploadRes.data.url;
 
       // 2. Update user profile
-      await axios.put('http://localhost:5000/api/auth/update-profile', {
+      await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/update-profile`, {
         avatar: avatarUrl
       });
       

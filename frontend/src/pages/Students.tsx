@@ -56,7 +56,7 @@ const Students: React.FC = () => {
   const fetchStudents = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:5000/api/students');
+      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/students`);
       setStudents(response.data);
     } catch (error) {
       console.error('Error fetching students:', error);
@@ -68,7 +68,7 @@ const Students: React.FC = () => {
   const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this student?')) {
       try {
-        await axios.delete(`http://localhost:5000/api/students/${id}`);
+        await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/students/${id}`);
         alert('Student deleted successfully!');
         fetchStudents();
       } catch (error) {
@@ -82,15 +82,15 @@ const Students: React.FC = () => {
     e.preventDefault();
     try {
       if (editingStudent) {
-        await axios.put(`http://localhost:5000/api/students/${editingStudent._id}`, formData);
+        await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/students/${editingStudent._id}`, formData);
         alert('Student updated successfully!');
       } else {
-        await axios.post('http://localhost:5000/api/students', formData);
+        await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/students`, formData);
         
         // After creating the student record, generate their login credentials if requested
         if (formData.createAccount && formData.password) {
           try {
-             await axios.post('http://localhost:5000/api/auth/register-account', {
+             await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/register-account`, {
                name: formData.name,
                email: formData.email,
                password: formData.password,
@@ -118,7 +118,7 @@ const Students: React.FC = () => {
   const handleViewStudent = async (student: Student) => {
     setViewingStudent(student);
     try {
-      const response = await axios.get(`http://localhost:5000/api/marks?studentId=${student.studentId}`);
+      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/marks?studentId=${student.studentId}`);
       setStudentMarks(response.data);
     } catch (err) {
       console.error('Error fetching student marks:', err);

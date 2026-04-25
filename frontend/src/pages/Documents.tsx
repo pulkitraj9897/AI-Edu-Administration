@@ -46,7 +46,7 @@ const Documents: React.FC = () => {
 
   const fetchTeacherProfile = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/teachers');
+      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/teachers`);
       const teacherProfile = response.data.find((t: any) => t.email === user?.email);
       if (teacherProfile) {
         setAssignedClasses(teacherProfile.classes);
@@ -64,7 +64,7 @@ const Documents: React.FC = () => {
   const fetchDocuments = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:5000/api/documents');
+      const response = await axios.get(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/documents`);
       setDocuments(response.data);
     } catch (error) {
       console.error('Error fetching documents', error);
@@ -76,7 +76,7 @@ const Documents: React.FC = () => {
   const handleDelete = async (id: string) => {
     if (!window.confirm('Are you sure you want to delete this resource?')) return;
     try {
-      await axios.delete(`http://localhost:5000/api/documents/${id}`);
+      await axios.delete(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/documents/${id}`);
       fetchDocuments();
     } catch (error: any) {
        alert(error.response?.data?.message || 'Failed to delete');
@@ -98,13 +98,13 @@ const Documents: React.FC = () => {
         const fileData = new FormData();
         fileData.append('file', selectedFile);
         
-        const uploadRes = await axios.post('http://localhost:5000/api/upload', fileData, {
+        const uploadRes = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/upload`, fileData, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
         finalUrl = uploadRes.data.url;
       }
 
-      await axios.post('http://localhost:5000/api/documents', {
+      await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/documents`, {
         ...formData,
         url: finalUrl
       });
