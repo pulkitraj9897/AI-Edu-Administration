@@ -293,37 +293,6 @@ const Timetable: React.FC = () => {
           </table>
         </div>
       </Card>
-
-      {/* AI Optimization */}
-      <Card title="AI-Powered Timetable Optimization">
-        <div className="space-y-4">
-          <p className="text-gray-600 dark:text-gray-400">
-            Let AI automatically generate an optimized timetable based on:
-          </p>
-          <ul className="space-y-2">
-            <li className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-              <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
-              Teacher availability and preferences
-            </li>
-            <li className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-              <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
-              Room capacity and resources
-            </li>
-            <li className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-              <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
-              Subject complexity and student performance
-            </li>
-            <li className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-              <div className="w-1.5 h-1.5 bg-blue-600 rounded-full"></div>
-              Conflict detection and resolution
-            </li>
-          </ul>
-          <Button onClick={handleGenerateTimetable} disabled={saving}>
-             <RefreshCw className={`w-5 h-5 mr-2 ${saving ? 'animate-spin' : ''}`} />
-             {saving ? 'Generating Mathematical Grid...' : 'Generate Optimized Timetable'}
-          </Button>
-        </div>
-      </Card>
     </div>
   );
 };
