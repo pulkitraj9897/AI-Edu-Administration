@@ -291,6 +291,7 @@ router.get('/student-dashboard/:userId', async (req, res) => {
 
     const dashboardData = {
       studentId: student.studentId,
+      class: student.class,
       gpa: parseFloat(gpa),
       attendance: parseFloat(attendancePercentage),
       rank: student.performance.rank || '-',

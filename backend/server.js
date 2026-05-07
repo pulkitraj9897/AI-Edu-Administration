@@ -13,6 +13,8 @@ import chatbotRoutes from './routes/chatbot.js';
 import notificationRoutes from './routes/notifications.js';
 import marksRoutes from './routes/marks.js';
 import eventsRoutes from './routes/events.js';
+import documentRoutes from './routes/documents.js';
+import uploadRoutes from './routes/upload.js';
 
 dotenv.config();
 
@@ -52,6 +54,8 @@ app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/marks', marksRoutes);
 app.use('/api/events', eventsRoutes);
+app.use('/api/documents', documentRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

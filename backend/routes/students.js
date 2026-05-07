@@ -104,4 +104,24 @@ router.delete('/:id', protect, authorize('admin', 'teacher'), async (req, res) =
   }
 });
 
+// Update student face descriptor for facial recognition
+router.put('/:id/face', protect, authorize('admin', 'teacher'), async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id);
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+    if (req.body.faceDescriptor && Array.isArray(req.body.faceDescriptor)) {
+      student.faceDescriptor = req.body.faceDescriptor;
+      const updatedStudent = await student.save();
+      res.json({ message: 'Face registered successfully', student: updatedStudent });
+    } else {
+      res.status(400).json({ message: 'Invalid face descriptor data' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 export default router;

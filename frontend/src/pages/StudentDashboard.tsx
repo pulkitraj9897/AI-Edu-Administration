@@ -33,6 +33,7 @@ interface AssignmentData {
 
 interface StudentAnalyticsData {
   studentId: string;
+  class?: string;
   gpa: number;
   attendance: number;
   rank: number;
@@ -84,6 +85,11 @@ const StudentDashboard: React.FC = () => {
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
           Hello, {user?.name || 'Student'}!
         </h1>
+        {analytics?.class && (
+           <p className="text-xl font-medium text-orange-600 dark:text-orange-400 mb-2">
+             You are a student of class {analytics.class}
+           </p>
+        )}
         <p className="text-gray-600 dark:text-gray-400">
           Here is your current academic standing. Keep up the good work!
         </p>

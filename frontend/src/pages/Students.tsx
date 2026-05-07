@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Plus, Search, Download, Upload, Edit2, Trash2, Eye, Loader2 } from 'lucide-react';
+import { Plus, Search, Download, Upload, Edit2, Trash2, Eye, Loader2, Camera, UploadCloud, X, ScanFace } from 'lucide-react';
 import { Card } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
 import { Table } from '../components/UI/Table';
 import { useAuth } from '../context/AuthContext';
+import { loadModels, extractFaceDescriptor } from '../utils/faceApi';
 
 interface Student {
   _id: string;
@@ -21,6 +22,7 @@ interface Student {
     attendance: number;
     rank?: number;
   };
+  faceDescriptor?: number[];
 }
 
 const Students: React.FC = () => {
@@ -41,9 +43,91 @@ const Students: React.FC = () => {
     section: 'A',
     phone: '',
     photograph: '',
+    faceDescriptor: null as number[] | null,
     createAccount: false,
     password: ''
   });
+
+  const [modelsLoaded, setModelsLoaded] = useState(false);
+  const [isProcessingFace, setIsProcessingFace] = useState(false);
+
+  const [showWebcam, setShowWebcam] = useState(false);
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    if (!showModal) {
+      stopWebcam();
+    }
+  }, [showModal]);
+
+  const startWebcam = async () => {
+    setShowWebcam(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (err) {
+      console.error("Error accessing webcam:", err);
+      alert("Could not access webcam. Please check permissions.");
+      setShowWebcam(false);
+    }
+  };
+
+  const stopWebcam = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
+    setShowWebcam(false);
+  };
+
+  const processFaceImage = async (dataUrl: string) => {
+    setFormData(prev => ({ ...prev, photograph: dataUrl, faceDescriptor: null }));
+    if (!modelsLoaded) return;
+    
+    setIsProcessingFace(true);
+    try {
+      const descriptor = await extractFaceDescriptor(dataUrl);
+      if (descriptor) {
+        setFormData(prev => ({ ...prev, faceDescriptor: descriptor }));
+      } else {
+        alert("No face detected! Please ensure the student is looking clearly at the camera with good lighting.");
+      }
+    } catch (err) {
+      console.error("Face extraction failed:", err);
+    }
+    setIsProcessingFace(false);
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const context = canvasRef.current.getContext('2d');
+      if (context) {
+        canvasRef.current.width = videoRef.current.videoWidth;
+        canvasRef.current.height = videoRef.current.videoHeight;
+        context.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
+        const dataUrl = canvasRef.current.toDataURL('image/jpeg');
+        stopWebcam();
+        processFaceImage(dataUrl);
+      }
+    }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === 'string') {
+          processFaceImage(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   // State for the Student Details View (Eye Icon)
   const [viewingStudent, setViewingStudent] = useState<Student | null>(null);
@@ -51,6 +135,7 @@ const Students: React.FC = () => {
 
   useEffect(() => {
     fetchStudents();
+    loadModels().then(() => setModelsLoaded(true)).catch(console.error);
   }, []);
 
   const fetchStudents = async () => {
@@ -81,11 +166,13 @@ const Students: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      let savedStudentId = editingStudent?._id;
+      
       if (editingStudent) {
         await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/students/${editingStudent._id}`, formData);
-        alert('Student updated successfully!');
       } else {
-        await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/students`, formData);
+        const res = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/students`, formData);
+        savedStudentId = res.data._id;
         
         // After creating the student record, generate their login credentials if requested
         if (formData.createAccount && formData.password) {
@@ -96,18 +183,25 @@ const Students: React.FC = () => {
                password: formData.password,
                role: 'student'
              });
-             alert('Student and login credentials created successfully!');
           } catch (authErr: any) {
              console.error('Auth creation error:', authErr);
              alert(`Student record created, but failed to create login account: ${authErr.response?.data?.message || authErr.message}`);
           }
-        } else {
-          alert('Student added successfully!');
         }
       }
+
+      // Save face descriptor if captured
+      if (savedStudentId && formData.faceDescriptor) {
+        await axios.put(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/students/${savedStudentId}/face`, {
+          faceDescriptor: formData.faceDescriptor
+        });
+      }
+
+      alert(editingStudent ? 'Student updated successfully!' : 'Student added successfully!');
+      
       setShowModal(false);
       setEditingStudent(null);
-      setFormData({ studentId: '', name: '', email: '', class: '10A', section: 'A', phone: '', photograph: '', createAccount: false, password: '' });
+      setFormData({ studentId: '', name: '', email: '', class: '10A', section: 'A', phone: '', photograph: '', faceDescriptor: null, createAccount: false, password: '' });
       fetchStudents();
     } catch (error) {
       console.error('Error saving student:', error);
@@ -223,6 +317,7 @@ const Students: React.FC = () => {
                 section: student.section,
                 phone: student.phone,
                 photograph: student.photograph || '',
+                faceDescriptor: student.faceDescriptor || null,
                 createAccount: false,
                 password: ''
               });
@@ -278,7 +373,7 @@ const Students: React.FC = () => {
         {isAdminOrTeacher && (
           <Button onClick={() => {
             setEditingStudent(null);
-            setFormData({ studentId: '', name: '', email: '', class: '10A', section: 'A', phone: '', photograph: '', createAccount: false, password: '' });
+            setFormData({ studentId: '', name: '', email: '', class: '10A', section: 'A', phone: '', photograph: '', faceDescriptor: null, createAccount: false, password: '' });
             setShowModal(true);
           }}>
             <Plus className="w-5 h-5" />
@@ -477,17 +572,76 @@ const Students: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Photograph URL (Optional)
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Student Photograph
                   </label>
-                  <input
-                    type="url"
-                    value={formData.photograph}
-                    onChange={(e) => setFormData({ ...formData, photograph: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
-                    placeholder="https://example.com/photo.jpg"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Provide a URL. File uploads for facial recognition will be supported soon.</p>
+                  
+                  {formData.photograph ? (
+                    <div className="flex flex-col items-center mb-4">
+                      <div className="relative w-32 h-32 border-2 border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+                        <img src={formData.photograph} alt="Preview" className="w-full h-full object-cover" />
+                        <button 
+                          type="button" 
+                          onClick={() => setFormData({...formData, photograph: '', faceDescriptor: null})}
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 shadow-sm"
+                          title="Remove photo"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <div className="mt-2 text-sm flex items-center gap-2">
+                        {isProcessingFace ? (
+                           <span className="flex items-center gap-1 text-blue-500"><Loader2 className="w-4 h-4 animate-spin" /> Analyzing face...</span>
+                        ) : formData.faceDescriptor ? (
+                           <span className="flex items-center gap-1 text-green-600 font-medium"><ScanFace className="w-4 h-4" /> Face verified for AI attendance</span>
+                        ) : (
+                           <span className="flex items-center gap-1 text-red-500"><X className="w-4 h-4" /> No face detected in photo</span>
+                        )}
+                      </div>
+                    </div>
+                  ) : showWebcam ? (
+                    <div className="mb-4">
+                      <div className="relative bg-black rounded-lg overflow-hidden w-full aspect-video flex items-center justify-center border border-gray-300 dark:border-gray-700">
+                        <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover"></video>
+                        <canvas ref={canvasRef} className="hidden"></canvas>
+                      </div>
+                      <div className="flex gap-2 mt-2">
+                        <Button type="button" onClick={capturePhoto} className="flex-1 bg-green-600 hover:bg-green-700 text-white border-transparent">
+                          Capture Photo
+                        </Button>
+                        <Button type="button" variant="outline" onClick={stopWebcam} className="flex-1">
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex gap-3 mb-3">
+                      <label className="flex-1 flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-500 transition-colors">
+                        <UploadCloud className="w-6 h-6 text-blue-500 mb-2" />
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Upload File</span>
+                        <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+                      </label>
+                      <button 
+                        type="button" 
+                        onClick={startWebcam}
+                        className="flex-1 flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-500 transition-colors"
+                      >
+                        <Camera className="w-6 h-6 text-blue-500 mb-2" />
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Take Photo</span>
+                      </button>
+                    </div>
+                  )}
+                  
+                  <div className="mt-2">
+                    <p className="text-xs text-gray-500 mb-1">Or enter a direct image URL:</p>
+                    <input
+                      type="url"
+                      value={formData.photograph}
+                      onChange={(e) => setFormData({ ...formData, photograph: e.target.value })}
+                      className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white text-sm"
+                      placeholder="https://example.com/photo.jpg"
+                    />
+                  </div>
                 </div>
 
                 {!editingStudent && (

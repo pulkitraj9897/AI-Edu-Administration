@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Bell, CheckCheck, Trash2, Filter } from 'lucide-react';
+import { Bell, CheckCheck, Trash2, Filter, Plus, X } from 'lucide-react';
 import { Card } from '../components/UI/Card';
 import { Button } from '../components/UI/Button';
+import { useAuth } from '../context/AuthContext';
 
 interface Notification {
   id: number;
@@ -15,8 +16,18 @@ interface Notification {
 }
 
 const Notifications: React.FC = () => {
+  const { user } = useAuth();
+  const isAdminOrTeacher = user?.role === 'admin' || user?.role === 'teacher';
+
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [formData, setFormData] = useState({
+    title: '',
+    message: '',
+    type: 'announcement',
+    priority: 'low'
+  });
 
   useEffect(() => {
     fetchNotifications();
@@ -60,6 +71,19 @@ const Notifications: React.FC = () => {
     }
   };
 
+  const handleCreateNotification = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/notifications`, formData);
+      setShowCreateModal(false);
+      setFormData({ title: '', message: '', type: 'announcement', priority: 'low' });
+      fetchNotifications();
+    } catch (error) {
+      console.error('Error creating notification:', error);
+      alert('Failed to create notification');
+    }
+  };
+
   const getTypeIcon = (type: string) => {
     const icons: any = {
       assignment: '📝',
@@ -95,6 +119,12 @@ const Notifications: React.FC = () => {
           </p>
         </div>
         <div className="flex gap-2">
+          {isAdminOrTeacher && (
+             <Button onClick={() => setShowCreateModal(true)} className="bg-indigo-600 hover:bg-indigo-700">
+               <Plus className="w-5 h-5 mr-2" />
+               Create Alert
+             </Button>
+          )}
           <Button variant="outline" onClick={markAllAsRead}>
             <CheckCheck className="w-5 h-5" />
             Mark All Read
@@ -224,6 +254,59 @@ const Notifications: React.FC = () => {
           ))
         )}
       </div>
+
+      {/* Create Notification Modal */}
+      {showCreateModal && isAdminOrTeacher && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Create Notification</h2>
+                <button onClick={() => setShowCreateModal(false)} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300">
+                   <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateNotification} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
+                  <input type="text" required value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white" placeholder="Alert title" />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Message</label>
+                  <textarea rows={3} required value={formData.message} onChange={e => setFormData({...formData, message: e.target.value})} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white resize-none" placeholder="Notification details..." />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
+                    <select value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white">
+                      <option value="announcement">Announcement</option>
+                      <option value="assignment">Assignment</option>
+                      <option value="event">Event</option>
+                      <option value="alert">Alert</option>
+                      <option value="grade">Grade</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Priority</label>
+                    <select value={formData.priority} onChange={e => setFormData({...formData, priority: e.target.value})} className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white">
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                    </select>
+                  </div>
+                </div>
+
+                <Button type="submit" className="w-full mt-6 bg-indigo-600 hover:bg-indigo-700">
+                  Send Notification
+                </Button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

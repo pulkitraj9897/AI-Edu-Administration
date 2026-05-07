@@ -27,6 +27,10 @@ const studentSchema = new mongoose.Schema({
       value: Number
     }],
     aiInsights: { type: String, default: null }
+  },
+  faceDescriptor: {
+    type: [Number],
+    required: false
   }
 });
 
